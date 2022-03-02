@@ -80,6 +80,7 @@ class Deck():
 			raise ValueError()
 
 		ret = [self.deal _ in range(n)]
+		\
 		return ret
 
 	def collect(self, card=None, c_all=False):
