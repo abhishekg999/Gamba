@@ -1,3 +1,7 @@
 *.key
 *.pyc
 *.sqlite
+
+.vscode
+__pycache__
+venv
