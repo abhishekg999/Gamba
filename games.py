@@ -16,7 +16,4 @@ def lower():
     ret = {"game": "lower", "value": value}
 
     return jsonify(ret)
-
-@app.route("/crash", methods=["GET"])
-def blackjack():
     
