@@ -1,6 +1,8 @@
 from flask import Flask
 from flask import request, jsonify, flash
 from flask import abort, redirect, url_for
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 from markupsafe import escape
 import json
@@ -20,6 +22,8 @@ load_dotenv()
 application = Flask(__name__)
 app = application
 
+limiter = Limiter(get_remote_address, app=app)
+
 # pylint: disable-next=C0413, W0611
 import account
 
@@ -34,6 +38,12 @@ def page_not_found(error):
 
     return ret
 
+@app.errorhandler(429) 
+def handle_rate_limit_exceeded(error):
+    response = jsonify({
+        'error': 'Rate limit exceeded. Please try again later.'
+    })
+    return response
 
 if __name__ == "__main__":
     app.secret_key = os.getenv("SECRET_KEY")

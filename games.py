@@ -5,7 +5,7 @@ from jwts import get_username_from_token
 from account import User, db
 
 # pylint: disable-next=E0611
-from __main__ import app
+from __main__ import app, limiter
 
 @app.route("/coinflip", methods=["GET"])
 @jsonret
@@ -23,6 +23,7 @@ def lower():
     return ret
 
 @app.route("/beg", methods=["GET"])
+@limiter.limit("1/minute")
 @jsonret
 def beg():
     token = request.values.get("token")
