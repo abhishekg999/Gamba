@@ -37,4 +37,4 @@ def page_not_found(error):
 
 if __name__ == "__main__":
     app.secret_key = os.getenv("SECRET_KEY")
-    app.run()
+    app.run(debug=True)

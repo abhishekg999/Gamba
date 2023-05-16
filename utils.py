@@ -1,4 +1,5 @@
-from flask import jsonify 
+from flask import jsonify
+
 
 def jsonret(callback):
     """
@@ -7,8 +8,11 @@ def jsonret(callback):
     Args:
         callback (function): Flask route handler
     """
+
     def inner(*args, **kwargs):
         return jsonify(callback(*args, **kwargs))
 
     inner.__name__ = callback.__name__
     return inner
+
+

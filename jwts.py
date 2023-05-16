@@ -14,7 +14,7 @@ def create_jwt_token(username: str) -> str:
     Returns:
         str: JWT token for user expiring in 1 day
     """
-    payload = {"username": username, "exp": datetime.utcnow() + timedelta(days=1)}
+    payload = {"username": username, "exp": datetime.utcnow() + timedelta(minutes=15)}
     token = jwt.encode(
         payload=payload,
         key=app.config["SECRET_KEY"],
@@ -38,3 +38,19 @@ def validate_jwt_token(token: str) -> dict | None:
         return payload
     except:
         return None
+
+def get_username_from_token(token):
+    if not token:
+        return None
+
+    payload = validate_jwt_token(token)
+
+    # if payload is None, invalid JWT
+    if not payload:
+        return None
+
+    username = payload["username"]
+    if not username:
+        return None
+
+    return username

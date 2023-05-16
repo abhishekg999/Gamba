@@ -1,6 +1,6 @@
 from flask import request
 from flask_sqlalchemy import SQLAlchemy
-from jwts import create_jwt_token, validate_jwt_token
+from jwts import create_jwt_token, get_username_from_token
 
 from markupsafe import escape
 import bcrypt
@@ -139,25 +139,11 @@ def me():
     """
 
     token = request.values.get("token")
-
-    if not token:
-        ret = {"error": "No token provided."}
-
-        return ret
-
-    payload = validate_jwt_token(token)
-
-    # if payload is None, invalid JWT
-    if not payload:
-        ret = {"error": "Invalid JWT Provided"}
-
-        return ret
-
-    username = payload["username"]
+    username = get_username_from_token(token)
 
     user = User.query.filter_by(username=username).first()
     if not user:
-        ret = {"error": "Invalid JWT Provided"}
+        ret = {"error": "Token invalid or not provided"}
 
         return ret
 
