@@ -141,10 +141,14 @@ def me():
     token = request.values.get("token")
     username = get_username_from_token(token)
 
+    if not username:
+        ret = {"error": "Token invalid or not provided"}
+        return ret
+
+
     user = User.query.filter_by(username=username).first()
     if not user:
         ret = {"error": "Token invalid or not provided"}
-
         return ret
 
     # Convert user object to JSON

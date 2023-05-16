@@ -39,7 +39,16 @@ def validate_jwt_token(token: str) -> dict | None:
     except:
         return None
 
-def get_username_from_token(token):
+def get_username_from_token(token: str | None) -> (str | None):
+    """
+    Validates token and returns username if valid.
+
+    Args:
+        token (str): JWT token
+
+    Returns:
+        (str | None): username if valid, None otherwise
+    """
     if not token:
         return None
 
