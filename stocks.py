@@ -5,14 +5,19 @@ import rel
 import time
 import json
 import threading
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 print_lock = threading.Lock()
 
-with open("api.key", "r") as f:
-    API_KEY = f.read()
+API_KEY = os.getenv("FINNHUB_API_KEY")
+
 
 def unix_to_date(t):
     return datetime.fromtimestamp(t)
+
 
 class StockClient:
     def __init__(self) -> None:
@@ -51,8 +56,10 @@ class StockClient:
 def on_message(ws, message):
     data = json.loads(message)
     with print_lock:
-        print(data)
-    
+        for l in data["data"]:
+            print(f"{l['s']}: {l['p']}")
+
+
 def on_error(ws, error):
     with print_lock:
         print(error)
@@ -61,7 +68,6 @@ def on_error(ws, error):
 def on_close(ws, close_status_code, close_msg):
     with print_lock:
         print("### closed ###")
-    
 
 
 def on_open(ws):
@@ -74,8 +80,9 @@ def runner():
     for i in range(100):
         with print_lock:
             print(i)
-        
+
         time.sleep(1)
+
 
 def main(*runners):
     threads = []
@@ -83,29 +90,30 @@ def main(*runners):
         t = threading.Thread(target=runner)
         t.daemon = True
         threads.append(t)
-    
+
     for thread in threads:
         thread.start()
-    
+
     return threads
 
 
 if __name__ == "__main__":
     # initialize all other threads
-    threads = main(runner)
+    # threads = main()
 
-    websocket.enableTrace(False)
-    ws = websocket.WebSocketApp(
-        f"wss://ws.finnhub.io?token={API_KEY}",
-        on_message=on_message,
-        on_error=on_error,
-        on_close=on_close,
-        on_open=on_open,
-    )
+    # websocket.enableTrace(False)
+    # ws = websocket.WebSocketApp(
+    #     f"wss://ws.finnhub.io?token={API_KEY}",
+    #     on_message=on_message,
+    #     on_error=on_error,
+    #     on_close=on_close,
+    #     on_open=on_open,
+    # )
 
-    ws.run_forever(skip_utf8_validation=True)
+    # ws.run_forever(skip_utf8_validation=True)
 
-    for thread in threads:
-        thread.join()
+    # for thread in threads:
+    #     thread.join()
 
-
+    client = StockClient()
+    print(client.fetch_option_chain("SPY"))
