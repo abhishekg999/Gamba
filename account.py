@@ -1,14 +1,18 @@
-from flask import request, jsonify
+from flask import request
 from flask_sqlalchemy import SQLAlchemy
+from jwts import create_jwt_token, validate_jwt_token
 
 from markupsafe import escape
 import bcrypt
+
+from utils import jsonret
+import os
 
 # pylint: disable-next=E0611
 from __main__ import app
 
 db = SQLAlchemy()
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///account.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
 
 db.init_app(app)
 
@@ -30,12 +34,13 @@ class User(db.Model):
     money = db.Column(
         db.Numeric(precision=38, scale=2), nullable=False, server_default="0.00"
     )
+    assets = db.Column(db.JSON, nullable=False, server_default="{}")
 
     def __init__(self, username, password):
         self.username = username
         self.set_password(password)
 
-    def set_password(self, password : str):
+    def set_password(self, password: str):
         """
         Hashes and sets password hash to user object
 
@@ -73,8 +78,8 @@ def check_login(username: str | None, password: str | None) -> User | None:
 
     return None
 
-
 @app.route("/login", methods=["GET"])
+@jsonret
 def login():
     """
     Route to login. Takes username and password, returns
@@ -86,15 +91,16 @@ def login():
 
     user = check_login(username, password)
     if user:
-        print(user)
-        ret = {"login": True, "message": "Login Successful"}
+        token = create_jwt_token(user.username)
+        ret = {"login": True, "message": "Login Successful", "token": token}
     else:
         ret = {"login": False, "message": "Invalid username or password."}
 
-    return jsonify(ret)
+    return ret
 
 
 @app.route("/signup", methods=["GET"])
+@jsonret
 def signup():
     """
     Route to signup. Takes username and password, returns
@@ -105,14 +111,14 @@ def signup():
 
     if not (username or password):
         ret = {"login": False, "message": "Invalid username or password."}
-        return jsonify(ret)
+        return ret
 
     user = User(username, password)
     # If User with username already exists, invalid
     if User.query.filter_by(username=username).first():
         ret = {"login": False, "message": "User already exists. Try logging in."}
-        return jsonify(ret)
-
+        return ret
+    
     # User does not exist, username and password provided
     db.session.add(user)
     db.session.commit()
@@ -121,4 +127,34 @@ def signup():
         "login": True,
         "message": f"Successfully created account with username {escape(username)}",
     }
-    return jsonify(ret)
+    return ret
+
+@app.route("/me", methods=["GET"])
+@jsonret
+def me():
+    """
+    Returns information about current user.
+    """
+
+    token = request.values.get("token")
+
+    if not token:
+        ret = {
+            "error": "No token provided."
+        }
+
+        return ret
+
+    payload = validate_jwt_token(token)
+
+    # if payload is None, invalid JWT
+    if not payload:
+        ret = {
+            "error": "Invalid JWT Provided"
+        }
+
+        return ret
+    
+    
+        
+    

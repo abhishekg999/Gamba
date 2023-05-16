@@ -13,18 +13,26 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 import os
 
+from utils import jsonret
 load_dotenv()
-app = Flask(__name__)
+
+# for AWS default configuration
+application = Flask(__name__)
+app = application
 
 # pylint: disable-next=C0413, W0611
 import account
+
+# pylint: disable-next=C0413, W0611
 import games
 
 @app.errorhandler(404)
+@jsonret
 def page_not_found(error):
+    """Invalid request"""
     ret = {"error": "Invalid Request"}
 
-    return jsonify(ret)
+    return ret
 
 
 if __name__ == "__main__":
