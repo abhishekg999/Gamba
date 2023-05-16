@@ -2,6 +2,8 @@
 *.pyc
 *.sqlite
 *.db
+*.env
+.env
 
 .vscode
 __pycache__

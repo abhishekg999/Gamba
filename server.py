@@ -10,7 +10,10 @@ import sqlite3
 from sqlite3 import Error
 
 from flask_sqlalchemy import SQLAlchemy
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 app = Flask(__name__)
 
 # pylint: disable-next=C0413, W0611
@@ -25,7 +28,5 @@ def page_not_found(error):
 
 
 if __name__ == "__main__":
-    with open("secret_.key", "r") as f:
-        app.secret_key = f.read()
-
+    app.secret_key = os.getenv("SECRET_KEY")
     app.run()
