@@ -78,6 +78,7 @@ def check_login(username: str | None, password: str | None) -> User | None:
 
     return None
 
+
 @app.route("/login", methods=["GET"])
 @jsonret
 def login():
@@ -118,7 +119,7 @@ def signup():
     if User.query.filter_by(username=username).first():
         ret = {"login": False, "message": "User already exists. Try logging in."}
         return ret
-    
+
     # User does not exist, username and password provided
     db.session.add(user)
     db.session.commit()
@@ -128,6 +129,7 @@ def signup():
         "message": f"Successfully created account with username {escape(username)}",
     }
     return ret
+
 
 @app.route("/me", methods=["GET"])
 @jsonret
@@ -139,9 +141,7 @@ def me():
     token = request.values.get("token")
 
     if not token:
-        ret = {
-            "error": "No token provided."
-        }
+        ret = {"error": "No token provided."}
 
         return ret
 
@@ -149,12 +149,23 @@ def me():
 
     # if payload is None, invalid JWT
     if not payload:
-        ret = {
-            "error": "Invalid JWT Provided"
-        }
+        ret = {"error": "Invalid JWT Provided"}
 
         return ret
-    
-    
-        
-    
+
+    username = payload["username"]
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        ret = {"error": "Invalid JWT Provided"}
+
+        return ret
+
+    # Convert user object to JSON
+    user_data = {
+        "username": user.username,
+        "money": user.money,
+        "assets": user.assets,
+    }
+
+    return user_data
