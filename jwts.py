@@ -12,7 +12,7 @@ def create_jwt_token(username: str) -> str:
         username (str): Username to generate token for
 
     Returns:
-        str: JWT token for user expiring in 1 day
+        str: JWT token for user expiring in 15 minutes
     """
     payload = {"username": username, "exp": datetime.utcnow() + timedelta(minutes=15)}
     token = jwt.encode(

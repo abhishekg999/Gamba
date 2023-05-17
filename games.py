@@ -4,9 +4,12 @@ from utils import jsonret
 from jwts import get_username_from_token
 from account import User, db
 import decimal
+from redis_server import create_redis_lock
 
 # pylint: disable-next=E0611
 from __main__ import app, limiter
+
+DB_LOCK = create_redis_lock('DB_LOCK')
 
 @app.route("/coinflip", methods=["GET"])
 @jsonret
@@ -52,34 +55,35 @@ def lower():
         ret = {"error": "Token invalid or not provided"}
         return ret
     
-    user = User.query.filter_by(username=username).first()
-    if not user:
-        ret = {"error": "Token invalid or not provided"}
-        return ret
+    with DB_LOCK:
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            ret = {"error": "Token invalid or not provided"}
+            return ret
+        
+        if user.money < bet_value:
+            ret = {"error": "Not enough money in account to bet that much"}
+            return ret
+
+        lower_value = random.randint(0, 100)
+        multiplier = 100 / target_value
     
-    if user.money < bet_value:
-        ret = {"error": "Not enough money in account to bet that much"}
-        return ret
+        if lower_value >= target_value:
+            user.money -= bet_value
+            result = 'lose'
+            change = -bet_value
+        else:
+            user.money = user.money + decimal.Decimal(-bet_value + bet_value * multiplier)
+            result = 'win'
+            change = bet_value * multiplier
 
-    lower_value = random.randint(0, 100)
-    multiplier = 100 / target_value
+        db.session.commit()
 
-    if lower_value >= target_value:
-        user.money -= bet_value
-        result = 'lose'
-        change = -bet_value
-    else:
-        user.money = user.money + decimal.Decimal(-bet_value + bet_value * multiplier)
-        result = 'win'
-        change = bet_value * multiplier
-
-    db.session.commit()
-    ret = {"game": "lower", "bet": bet_value, "target": target_value, "result": result, "value": lower_value, "change": bet_value, "balance": user.money }
+    ret = {"game": "lower", "bet": bet_value, "target": target_value, "result": result, "value": lower_value, "change": change, "balance": user.money }
 
     return ret
 
 @app.route("/beg", methods=["GET"])
-@limiter.limit("1/minute")
 @jsonret
 def beg():
     token = request.values.get("token")
@@ -89,15 +93,17 @@ def beg():
         ret = {"error": "Token invalid or not provided"}
         return ret
     
-    user = User.query.filter_by(username=username).first()
-    if not user:
-        ret = {"error": "Token invalid or not provided"}
-        return ret
+    with DB_LOCK:
 
-    value = random.randint(1, 40)
-    user.money += value
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            ret = {"error": "Token invalid or not provided"}
+            return ret
+        
+        value = 100
 
-    db.session.commit()
+        user.money += value
+        db.session.commit()
 
     ret = {"game": "beg", "result": "win", "change": value, "balance": user.money}
     return ret
