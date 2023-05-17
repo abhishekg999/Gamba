@@ -44,6 +44,10 @@ def parse_option_symbol(contract: str):
     except (AssertionError, ValueError):
         return None
 
+def option_to_contract_name(option_data: dict):
+    option_data['strike'] = int(option_data['strike']*1000)
+    return f"{option_data['symbol']}{option_data['year']:02}{option_data['month']:02}{option_data['day']:02}{option_data['type']}{option_data['strike']:08}"
+
 
 class StockClient:
     def __init__(self) -> None:
@@ -149,5 +153,8 @@ if __name__ == "__main__":
     # for thread in threads:
     #     thread.join()
 
-    with ThreadContextManager(handle_option_chain_cache) as threads:
-        print(parse_option_symbol("SPY230516C00330000"))
+    #with ThreadContextManager(handle_option_chain_cache) as threads:
+    option = "SPY230516C00330000"
+    parsed = parse_option_symbol(option)
+    back = option_to_contract_name(parsed)
+    assert option == back
