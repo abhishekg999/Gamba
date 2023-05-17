@@ -26,6 +26,7 @@ app = application
 limiter = Limiter(get_remote_address, app=app)
 
 # pylint: disable=C0413, W0611
+import database
 import account
 import games
 
