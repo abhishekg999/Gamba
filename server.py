@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 import os
 
 from utils import jsonret
+
 load_dotenv()
 
 # for AWS default configuration
@@ -24,10 +25,8 @@ app = application
 
 limiter = Limiter(get_remote_address, app=app)
 
-# pylint: disable-next=C0413, W0611
+# pylint: disable=C0413, W0611
 import account
-
-# pylint: disable-next=C0413, W0611
 import games
 
 @app.errorhandler(404)

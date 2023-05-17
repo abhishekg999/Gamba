@@ -7,16 +7,42 @@ import json
 import threading
 from dotenv import load_dotenv
 import os
+import re
+from redis_server import R
+
+from context import ThreadContextManager
 
 load_dotenv()
 
-print_lock = threading.Lock()
-
 API_KEY = os.getenv("FINNHUB_API_KEY")
+PARSE_OPTION_STRING_RE = r"^([A-Z]*)(\d{2})(\d{2})(\d{2})([CP])(\d*)$"
+
+R_pipeline = R.pipeline()
+print_lock = threading.Lock()
 
 
 def unix_to_date(t):
     return datetime.fromtimestamp(t)
+
+
+def parse_option_symbol(contract: str):
+    match = re.match(PARSE_OPTION_STRING_RE, contract)
+    if match is None:
+        return None
+
+    groups = match.groups()
+    keys = ["symbol", "year", "month", "day", "type", "strike"]
+
+    try:
+        assert len(groups) == len(keys)
+        ret = dict(zip(keys, groups))
+        ret["year"] = int(ret["year"])
+        ret["month"] = int(ret["month"])
+        ret["day"] = int(ret["day"])
+        ret["strike"] = float(ret["strike"][:-3] + "." + ret["strike"][-3:])
+        return ret
+    except (AssertionError, ValueError):
+        return None
 
 
 class StockClient:
@@ -53,35 +79,43 @@ class StockClient:
         return res
 
 
-def on_message(ws, message):
-    data = json.loads(message)
-    with print_lock:
-        for l in data["data"]:
-            print(f"{l['s']}: {l['p']}")
+client = StockClient()
 
 
-def on_error(ws, error):
-    with print_lock:
-        print(error)
+def handle_option_chain_cache():
+    """
+    Stores SPY option chain data to redis server
+    """
+    while True:
+        remote = client.fetch_option_chain("SPY")
+        res = json.loads(remote)
+        
+        code = res.get("code", None)
 
+        # remove this
+        if not code:
+            time.sleep(5)
+            break
 
-def on_close(ws, close_status_code, close_msg):
-    with print_lock:
-        print("### closed ###")
+        expirations = res.get("data", [])
+        for expiry in expirations:
+            options = expiry["options"]
+            calls = options.get("CALL", [])
+            for call in calls:
+                contract_name = call["contractName"]
+                last_price = call["lastPrice"]
+                key = f"option_chain:{code}:{contract_name}:lastPrice" 
+                R_pipeline.set(key, last_price)
 
+            puts = options.get("PUT", [])
+            for put in puts:
+                contract_name = put["contractName"]
+                last_price = put["lastPrice"]
+                key = f"option_chain:{code}:{contract_name}:lastPrice" 
+                R_pipeline.set(key, last_price)
 
-def on_open(ws):
-    ws.send('{"type":"subscribe","symbol":"AAPL"}')
-    ws.send('{"type":"subscribe","symbol":"AMZN"}')
-    ws.send('{"type":"subscribe","symbol":"BINANCE:BTCUSDT"}')
-
-
-def runner():
-    for i in range(100):
-        with print_lock:
-            print(i)
-
-        time.sleep(1)
+        R_pipeline.execute()
+        time.sleep(5)
 
 
 def main(*runners):
@@ -115,5 +149,5 @@ if __name__ == "__main__":
     # for thread in threads:
     #     thread.join()
 
-    client = StockClient()
-    print(client.fetch_option_chain("SPY"))
+    with ThreadContextManager(handle_option_chain_cache) as threads:
+        print(parse_option_symbol("SPY230516C00330000"))

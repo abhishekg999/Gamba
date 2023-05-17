@@ -8,3 +8,4 @@ R = redis.Redis(host=host, port=port, decode_responses=True)
 
 def create_redis_lock(id):
     return R.lock(id)
+
