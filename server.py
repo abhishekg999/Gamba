@@ -1,15 +1,7 @@
 from flask import Flask
-from flask import request, jsonify, flash
-from flask import abort, redirect, url_for
+from flask import request, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-
-from markupsafe import escape
-import json
-
-import random
-import sqlite3
-from sqlite3 import Error
 
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
@@ -23,7 +15,7 @@ load_dotenv()
 application = Flask(__name__)
 app = application
 
-limiter = Limiter(get_remote_address, app=app)
+limiter = None
 
 # pylint: disable=C0413, W0611
 import database
