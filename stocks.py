@@ -54,6 +54,9 @@ class StockClient:
         self._api_key = API_KEY
         self.finnhub_client = finnhub.Client(api_key=self._api_key)
 
+        # manually increase Client timeout since option chain request might take a sec
+        self.finnhub_client.DEFAULT_TIMEOUT = 30 # type: ignore
+
     def fetch_quote(self, symbol, queue=None):
         """
         Gets stock quote for a ticker.
@@ -91,6 +94,10 @@ def handle_option_chain_cache():
     Stores SPY option chain data to redis server
     """
     while True:
+        # handle exit condition
+        if R.get("handler:global_exit") == "quit":
+            return
+
         remote = client.fetch_option_chain("SPY")
         res = json.loads(remote)
         
@@ -99,7 +106,8 @@ def handle_option_chain_cache():
         # remove this
         if not code:
             time.sleep(5)
-            break
+            print("in handle_option_chain: error in fetching data")
+            continue
 
         expirations = res.get("data", [])
         for expiry in expirations:
@@ -135,6 +143,7 @@ def main(*runners):
     return threads
 
 
+
 if __name__ == "__main__":
     # initialize all other threads
     # threads = main()
@@ -153,8 +162,10 @@ if __name__ == "__main__":
     # for thread in threads:
     #     thread.join()
 
-    #with ThreadContextManager(handle_option_chain_cache) as threads:
-    option = "SPY230516C00330000"
-    parsed = parse_option_symbol(option)
-    back = option_to_contract_name(parsed)
-    assert option == back
+    with ThreadContextManager(handle_option_chain_cache) as threads:
+        option = "SPY230516C00330000"
+        parsed = parse_option_symbol(option)
+        back = option_to_contract_name(parsed)
+        assert option == back
+
+        
