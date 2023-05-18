@@ -86,3 +86,8 @@ def buy():
         ret = {"stocks": "buy", "balance": user.money, "assets": user.assets, "message": f"Bought {amount} shares for {last_price} a share, {total_user_cost} in total spent"}
 
     return ret
+
+# TODO: Need to add sell
+# TODO: eventually completely remove these and implement limit_buy and limit_sell
+# TODO: have a worker thread listen to the webserver and store quote data in redis server, then fetch from redis
+# TODO: implement transition states for purchase when having limit buy / sell, use redis hmap with expiry?
