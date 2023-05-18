@@ -21,6 +21,7 @@ limiter = None
 import database
 import account
 import games
+import stocks
 
 @app.errorhandler(404)
 @jsonret

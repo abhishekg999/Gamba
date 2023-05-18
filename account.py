@@ -43,6 +43,7 @@ def login():
     session token to be used with rest of api.
     """
 
+    # TODO: FIX VALIDATION HERE
     username = request.values.get("username")
     password = request.values.get("password")
 

@@ -25,7 +25,7 @@ def unix_to_date(t):
     return datetime.fromtimestamp(t)
 
 
-def parse_option_symbol(contract: str):
+def parse_option_symbol(contract: str) -> dict[str, int] | None:
     match = re.match(PARSE_OPTION_STRING_RE, contract)
     if match is None:
         return None
@@ -44,7 +44,7 @@ def parse_option_symbol(contract: str):
     except (AssertionError, ValueError):
         return None
 
-def option_to_contract_name(option_data: dict):
+def option_to_contract_name(option_data: dict[str, int]):
     option_data['strike'] = int(option_data['strike']*1000)
     return f"{option_data['symbol']}{option_data['year']:02}{option_data['month']:02}{option_data['day']:02}{option_data['type']}{option_data['strike']:08}"
 
@@ -56,6 +56,13 @@ class StockClient:
 
         # manually increase Client timeout since option chain request might take a sec
         self.finnhub_client.DEFAULT_TIMEOUT = 30 # type: ignore
+
+        # fetch periodically 
+        self.supported_symbols = ['AAPL', 'MSFT', 'GOOGL', 'SPY']
+
+    def is_supported_symbol(self, symbol):
+        return symbol in self.supported_symbols
+
 
     def fetch_quote(self, symbol, queue=None):
         """
@@ -86,7 +93,7 @@ class StockClient:
         return res
 
 
-client = StockClient()
+CLIENT = StockClient()
 
 
 def handle_option_chain_cache():
@@ -98,7 +105,7 @@ def handle_option_chain_cache():
         if R.get("handler:global_exit") == "quit":
             return
 
-        remote = client.fetch_option_chain("SPY")
+        remote = CLIENT.fetch_option_chain("SPY")
         res = json.loads(remote)
         
         code = res.get("code", None)
@@ -131,23 +138,8 @@ def handle_option_chain_cache():
         time.sleep(5)
 
 
-def main(*runners):
-    threads = []
-    for runner in runners:
-        t = threading.Thread(target=runner)
-        t.daemon = True
-        threads.append(t)
-
-    for thread in threads:
-        thread.start()
-
-    return threads
-
-
-
 if __name__ == "__main__":
     # initialize all other threads
-    # threads = main()
 
     # websocket.enableTrace(False)
     # ws = websocket.WebSocketApp(
@@ -163,10 +155,16 @@ if __name__ == "__main__":
     # for thread in threads:
     #     thread.join()
 
-    with ThreadContextManager(handle_option_chain_cache) as threads:
-        option = "SPY230516C00330000"
-        parsed = parse_option_symbol(option)
-        back = option_to_contract_name(parsed)
-        assert option == back
+    # with ThreadContextManager(handle_option_chain_cache) as threads:
+    #     option = "SPY230516C00330000"
+    #     parsed = parse_option_symbol(option)
+
+    #     assert parsed is not None
+    #     back = option_to_contract_name(parsed)
+    #     assert option == back
+
+    res = CLIENT.fetch_quote("AAPL")
+    print(res['c'])
+    assert res['t'] != 0
 
         

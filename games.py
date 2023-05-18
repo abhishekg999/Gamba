@@ -2,14 +2,11 @@ from flask import request
 import random
 from utils import jsonret
 from jwts import get_username_from_token
-from account import User, db
+from database import User, db, DB_LOCK
 import decimal
-from RedisServer import create_redis_lock
 
 # pylint: disable-next=E0611
-from __main__ import app, limiter
-
-DB_LOCK = create_redis_lock('DB_LOCK')
+from __main__ import app
 
 @app.route("/coinflip", methods=["GET"])
 @jsonret
@@ -25,7 +22,7 @@ def lower():
     bet = request.values.get("bet")
     target = request.values.get("target")
 
-    if bet is None or target is None:
+    if token is None or bet is None or target is None:
         ret = {"error": "Invalid arguments, require token, bet, target."}
         return ret
 
