@@ -4,7 +4,7 @@ from utils import jsonret
 from jwts import get_username_from_token
 from account import User, db
 import decimal
-from redis_server import create_redis_lock
+from RedisServer import create_redis_lock
 
 # pylint: disable-next=E0611
 from __main__ import app, limiter
@@ -93,7 +93,6 @@ def beg():
         return ret
     
     with DB_LOCK:
-
         user = User.query.filter_by(username=username).first()
         if not user:
             ret = {"error": "Token invalid or not provided"}

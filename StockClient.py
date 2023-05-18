@@ -8,7 +8,7 @@ import threading
 from dotenv import load_dotenv
 import os
 import re
-from redis_server import R
+from RedisServer import R
 
 from context import ThreadContextManager
 
@@ -103,7 +103,7 @@ def handle_option_chain_cache():
         
         code = res.get("code", None)
 
-        # remove this
+        # probably not the cleanest
         if not code:
             time.sleep(5)
             print("in handle_option_chain: error in fetching data")
@@ -112,13 +112,14 @@ def handle_option_chain_cache():
         expirations = res.get("data", [])
         for expiry in expirations:
             options = expiry["options"]
+    
             calls = options.get("CALL", [])
             for call in calls:
                 contract_name = call["contractName"]
                 last_price = call["lastPrice"]
                 key = f"option_chain:{code}:{contract_name}:lastPrice" 
                 R_pipeline.set(key, last_price)
-
+    
             puts = options.get("PUT", [])
             for put in puts:
                 contract_name = put["contractName"]
