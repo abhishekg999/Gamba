@@ -30,17 +30,17 @@ def lower():
         return ret
 
     try:
-        bet_value = int(bet)
+        bet_value = float(bet)
     except ValueError:
         ret = {"error": "Invalid bet provided"}
         return ret
     
-    if bet_value < 1:
+    if bet_value < 0:
         ret = {"error": "Invalid bet provided"}
         return ret
     
     try:
-        target_value = float(target)
+        target_value = int(target)
     except ValueError:
         ret = {"error": "Invalid target provided"}
         return ret
@@ -67,16 +67,15 @@ def lower():
 
         lower_value = random.randint(0, 100)
         multiplier = 100 / target_value
-    
+        
         if lower_value >= target_value:
-            user.money -= bet_value
             result = 'lose'
             change = -bet_value
         else:
-            user.money = user.money + decimal.Decimal(-bet_value + bet_value * multiplier)
             result = 'win'
-            change = bet_value * multiplier
+            change = -bet_value + bet_value * multiplier
 
+        user.money += decimal.Decimal(change)
         db.session.commit()
 
     ret = {"game": "lower", "bet": bet_value, "target": target_value, "result": result, "value": lower_value, "change": change, "balance": user.money }
