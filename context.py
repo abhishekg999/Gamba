@@ -1,4 +1,5 @@
 import threading
+from RedisServer import R
 
 class ThreadContextManager:
     """
@@ -26,4 +27,6 @@ class ThreadContextManager:
     def __exit__(self, exc_type, exc_value, traceback):
         for thread in self.threads:
             thread.join()
-
+        
+        # here remove abort flag once all threads finish
+        R.delete("handler:global_exit")
