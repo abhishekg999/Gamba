@@ -97,7 +97,12 @@ CLIENT = StockClient()
 
 
 def handle_live_trades():
-    LIFESPAN = 5
+    """
+    Handles life trade data. 
+
+    Use live data directly and discard for limit buys and sells.
+    """
+    lifespan = 5
 
     def on_message(ws, message: bytes):
         data = json.loads(message.decode())
@@ -115,8 +120,8 @@ def handle_live_trades():
         ws.send('{"type":"subscribe","symbol":"BINANCE:BTCUSDT"}')
 
         # initialize exit handler to exit websocket
-        if LIFESPAN:
-            exit_handler = threading.Timer(LIFESPAN, ws.close)
+        if lifespan:
+            exit_handler = threading.Timer(lifespan, ws.close)
             exit_handler.start()
 
     websocket.enableTrace(False)
