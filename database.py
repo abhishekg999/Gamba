@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 import bcrypt
 import os
-from RedisServer import create_redis_lock
+from redis_server import create_redis_lock
 from sqlalchemy.ext.mutable import MutableDict
 
 
@@ -13,7 +13,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
 
 db.init_app(app)
 
-DB_LOCK = create_redis_lock('DB_LOCK')
+DB_LOCK = create_redis_lock("DB_LOCK")
+
 
 class User(db.Model):
     """
@@ -33,7 +34,9 @@ class User(db.Model):
     money = db.Column(
         db.Numeric(precision=38, scale=2), nullable=False, server_default="0.00"
     )
-    assets = db.Column(MutableDict.as_mutable(db.JSON), nullable=False, server_default="{}")
+    assets = db.Column(
+        MutableDict.as_mutable(db.JSON), nullable=False, server_default="{}"
+    )
 
     def __init__(self, username, password):
         self.username = username

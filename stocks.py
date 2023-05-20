@@ -2,7 +2,7 @@ from flask import request
 from utils import jsonret
 from jwts import get_username_from_token
 from database import User, db, DB_LOCK
-from StockClient import CLIENT
+from stock_client import CLIENT
 import decimal
 
 # pylint: disable-next=E0611

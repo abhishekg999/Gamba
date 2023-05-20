@@ -1,4 +1,5 @@
 import redis
+from redis.exceptions import ConnectionError
 import os
 import sys
 import datetime
@@ -12,7 +13,7 @@ R = redis.Redis(host=host, port=port, decode_responses=True)
 try:
     R.set("meta:time_start", str(datetime.datetime.now()))
     print("Connected to Redis server!")
-except:
+except ConnectionError:
     print("Unable to connect to Redis server.")
     sys.exit(1)
 
@@ -20,4 +21,3 @@ except:
 def create_redis_lock(id):
     return R.lock(id)
 
- 
