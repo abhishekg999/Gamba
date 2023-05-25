@@ -1,14 +1,9 @@
-from flask import Flask
+from flask import Flask, g
 from flask import request, jsonify
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-
-from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 import os
 
 from utils import jsonret
-
 load_dotenv()
 
 # for AWS default configuration
@@ -22,6 +17,8 @@ import database
 import account
 import games
 import stocks
+
+from database import Session
 
 @app.errorhandler(404)
 @jsonret
@@ -37,6 +34,18 @@ def handle_rate_limit_exceeded(error):
         'error': 'Rate limit exceeded. Please try again later.'
     })
     return response
+
+@app.before_request
+def before_request():
+    g.session = Session()
+
+
+@app.teardown_request
+def teardown_request(exception=None):
+    session = getattr(g, 'session', None)
+    if session is not None:
+        session.close()
+
 
 if __name__ == "__main__":
     app.secret_key = os.getenv("SECRET_KEY")

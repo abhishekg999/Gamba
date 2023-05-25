@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import sessionmaker
 import bcrypt
 import os
 from redis_server import create_redis_lock
@@ -8,13 +9,15 @@ from sqlalchemy.ext.mutable import MutableDict
 # pylint: disable-next=E0611
 from __main__ import app
 
-db = SQLAlchemy()
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
 
+db = SQLAlchemy()
 db.init_app(app)
 
 DB_LOCK = create_redis_lock("DB_LOCK")
 
+with app.app_context():
+    Session = sessionmaker(db.engine)
 
 class User(db.Model):
     """
