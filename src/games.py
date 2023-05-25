@@ -2,7 +2,7 @@ from flask import request, g
 import random
 from utils import jsonret
 from jwts import get_username_from_token
-from database import User
+from database import User, DB_LOCK
 import decimal
 
 # pylint: disable-next=E0611
@@ -105,8 +105,7 @@ def beg():
         ret = {"error": "Token invalid or not provided"}
         return ret
 
-    try:
-        g.session.begin_nested()
+    with DB_LOCK:
         user = g.session.query(User).filter_by(username=username).first()
         if not user:
             ret = {"error": "Token invalid or not provided"}
@@ -119,7 +118,7 @@ def beg():
 
         ret = {"game": "beg", "result": "win", "change": value, "balance": user.money}
 
-    except Exception as err:
-        g.session.rollback()
-        ret = {"error": "unexpected error occured.", "traceback": str(err)}
+    # except Exception as err:
+    #     g.session.rollback()
+    #     ret = {"error": "unexpected error occured.", "traceback": str(err)}
     return ret

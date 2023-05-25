@@ -47,16 +47,19 @@ if __name__ == "__main__":
 
     print("Beginning tests...")
     data = get(login(username, password))
+
+    print(data)
     token = data["token"]
     print(token)
 
     data = get(me(token))
+    old_data = data
     print(data)
 
     current_money = float(data['money'])
 
-    NUM_REQUESTS = 1000
-    POOL = 100
+    NUM_REQUESTS = 5000
+    POOL = 5000
 
     rs = (grequests.get(beg(token)) for _ in range(NUM_REQUESTS))
     responses = grequests.imap(rs, size=POOL)
@@ -65,6 +68,6 @@ if __name__ == "__main__":
         print(response.json())
 
     data = get(me(token))
+    print(old_data)
     print(data)
-
     assert float(data['money']) == current_money + NUM_REQUESTS*100
