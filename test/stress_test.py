@@ -1,4 +1,5 @@
 from functools import wraps
+import random
 
 import grequests
 import requests
@@ -61,13 +62,36 @@ if __name__ == "__main__":
     NUM_REQUESTS = 5000
     POOL = 5000
 
-    rs = (grequests.get(beg(token)) for _ in range(NUM_REQUESTS))
+    def get_random_bet():
+        """
+        Random float between 5 to 1005
+        """
+        return random.random()*1000 + 5
+    
+    def get_random_target():
+        return random.randrange(1, 100)
+    
+    rs = (grequests.get(lower(token, get_random_bet(), get_random_target())) for _ in range(NUM_REQUESTS))
     responses = grequests.imap(rs, size=POOL)
 
+    acc_change = 0
+
     for response in responses:
-        print(response.json())
+        data = response.json()
+        print(data)
+
+        if 'error' in data:
+            continue
+        acc_change += float(data['change']) 
 
     data = get(me(token))
     print(old_data)
     print(data)
-    assert float(data['money']) == current_money + NUM_REQUESTS*100
+
+    money = float(data['money'])
+
+    print(f"Previous money: {current_money}, now have: {money}.")
+    print(f"Acc change: {acc_change}, actual change: {money - current_money}")
+
+    # close enough
+    assert abs((money - current_money) - acc_change) < 0.5

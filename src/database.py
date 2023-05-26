@@ -19,6 +19,7 @@ DB_LOCK = create_redis_lock("DB_LOCK")
 with app.app_context():
     Session = sessionmaker(db.engine)
 
+
 class User(db.Model):
     """
     SQLAlchemy Database connector for User object.

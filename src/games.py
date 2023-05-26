@@ -3,7 +3,6 @@ import random
 from utils import jsonret
 from jwts import get_username_from_token
 from database import User, DB_LOCK
-import decimal
 
 # pylint: disable-next=E0611
 from __main__ import app
@@ -54,28 +53,27 @@ def lower():
         ret = {"error": "Token invalid or not provided"}
         return ret
 
+    user = g.session.query(User).filter_by(username=username).first()
+    if not user:
+        ret = {"error": "Token invalid or not provided"}
+        return ret
+
+    if user.money < bet_value:
+        ret = {"error": "Not enough money in account to bet that much"}
+        return ret
+
+    lower_value = random.randint(0, 100)
+    multiplier = 100 / target_value
+
+    if lower_value >= target_value:
+        result = "lose"
+        change = -bet_value
+    else:
+        result = "win"
+        change = -bet_value + bet_value * multiplier
+
     try:
-        g.session.begin_nested()
-        user = g.session.query(User).filter_by(username=username).first()
-        if not user:
-            ret = {"error": "Token invalid or not provided"}
-            return ret
-
-        if user.money < bet_value:
-            ret = {"error": "Not enough money in account to bet that much"}
-            return ret
-
-        lower_value = random.randint(0, 100)
-        multiplier = 100 / target_value
-
-        if lower_value >= target_value:
-            result = "lose"
-            change = -bet_value
-        else:
-            result = "win"
-            change = -bet_value + bet_value * multiplier
-
-        user.money += decimal.Decimal(change)
+        user.money = User.money + change
         g.session.commit()
 
         ret = {
@@ -105,18 +103,21 @@ def beg():
         ret = {"error": "Token invalid or not provided"}
         return ret
 
-    with DB_LOCK:
-        user = g.session.query(User).filter_by(username=username).first()
-        if not user:
-            ret = {"error": "Token invalid or not provided"}
-            return ret
+    user = g.session.query(User).filter_by(username=username).first()
+    if not user:
+        ret = {"error": "Token invalid or not provided"}
+        return ret
 
-        value = 100
+    value = 100
 
-        user.money += value
+    try:
+        user.money = User.money + value
         g.session.commit()
-
         ret = {"game": "beg", "result": "win", "change": value, "balance": user.money}
+
+    except Exception as err:
+        g.session.rollback()
+        ret = {"error": "unexpected error occured.", "traceback": str(err)}
 
     # except Exception as err:
     #     g.session.rollback()

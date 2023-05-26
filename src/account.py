@@ -102,7 +102,6 @@ def me():
         ret = {"error": "Token invalid or not provided"}
         return ret
 
-
     user = User.query.filter_by(username=username).first()
     if not user:
         ret = {"error": "Token invalid or not provided"}
