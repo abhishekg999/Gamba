@@ -1,3 +1,5 @@
+# **THIS PROJECT WILL BE MOVED TO CASINO**
+
 # **Gamba**
 ## A gambling and stock market simulator backend written in **Python** using **Flask**. 
 
